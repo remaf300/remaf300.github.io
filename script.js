@@ -1,40 +1,48 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
+
+// Remplace par tes clés Supabase
+const SUPABASE_URL = 'https://tzgpkqothjjqmyfykysp.supabase.co/rest/v1/'
+const SUPABASE_ANON_KEY = 'tzgpkqothjjqmyfykysp'
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+
 document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('task-input');
     const addTaskBtn = document.getElementById('add-task-btn');
     const taskList = document.getElementById('task-list');
     const todosContainer = document.querySelector('.todos-container');    
-
-    const emptyImage = document.querySelector('.empty-image')
+    const emptyImage = document.querySelector('.empty-image');
 
     const toggleEmptyState = () => {
         emptyImage.style.display = taskList.children.length === 0 ? 'block' : 'none';
         todosContainer.style.width = taskList.children.length > 0 ? '100%' : '50%';
     }
 
-    const saveTaskToLocalStorage = () => {
-            const tasks = Array.from(taskList.querySelectorAll('li')).map(li => ({
-                text: li.querySelector("span").textContent,
-                completed: li.querySelector('.checkbox').checked
-            }));
-            localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
+    // CHARGER LES TÂCHES DEPUIS SUPABASE
+    const loadTasksFromSupabase = async () => {
+        const { data: tasks, error } = await supabase
+            .from('todos')
+            .select('*')
+            .order('id', { ascending: true });
 
-    const loadTasksFromLocalStorage = () => {
-        const savedTasks =  JSON.parse(localStorage.getItem('tasks')) || [];
-        savedTasks.forEach(({ text, completed}) => addTask(text, completed, false));
-        toggleEmptyState();
-    }
-
-    const addTask = (text, completed = false) => {
-        const taskText = text || taskInput.value.trim();
-        if(!taskText) {
+        if (error) {
+            console.error('Erreur lors du chargement :', error);
             return;
         }
 
+        taskList.innerHTML = '';
+        tasks.forEach(task => {
+            createTaskElement(task.id, task.task, task.completed);
+        });
+        toggleEmptyState();
+    };
+
+    // CRÉER L'ÉLÉMENT HTML D'UNE TÂCHE
+    const createTaskElement = (id, text, completed = false) => {
         const li = document.createElement('li');
+        li.dataset.id = id; // Stocke l'ID unique de la base de données
         li.innerHTML = `
         <input type="checkbox" class="checkbox" ${completed ? 'checked' : ''} />
-        <span>${taskText}</span>
+        <span>${text}</span>
         <div class="task-buttons">
             <button class="edit-btn"><i class="fa-solid fa-pen"></i></button>
             <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
@@ -51,40 +59,93 @@ document.addEventListener('DOMContentLoaded', () => {
             editBtn.style.pointerEvents = 'none';
         }
 
-        checkbox.addEventListener('change', () => {
+        // Gérer le changement d'état (coché / décoché)
+        checkbox.addEventListener('change', async () => {
             const isChecked = checkbox.checked;
             li.classList.toggle('completed', isChecked);
             editBtn.disabled = isChecked;
             editBtn.style.opacity = isChecked ? '0.5' : '1';
             editBtn.style.pointerEvents = isChecked ? 'none' : 'auto';
-            saveTaskToLocalStorage();
+
+            // Mettre à jour dans Supabase
+            const { error } = await supabase
+                .from('todos')
+                .update({ completed: isChecked })
+                .eq('id', id);
+
+            if (error) console.error('Erreur lors de la mise à jour :', error);
         });
 
-        editBtn.addEventListener('click', () => {
+        // Gérer l'édition
+        editBtn.addEventListener('click', async () => {
             if(!checkbox.checked){
                 taskInput.value = li.querySelector('span').textContent;
-                li.remove();
-                toggleEmptyState();
-                saveTaskToLocalStorage();
+                
+                // Supprimer de Supabase pour permettre de la recréer modifiée
+                const { error } = await supabase
+                    .from('todos')
+                    .delete()
+                    .eq('id', id);
+
+                if (!error) {
+                    li.remove();
+                    toggleEmptyState();
+                } else {
+                    console.error('Erreur lors de la suppression pour édition :', error);
+                }
             }
         });
 
-        li.querySelector('.delete-btn').addEventListener('click', () => {
-            li.remove();
-            toggleEmptyState();
-            saveTaskToLocalStorage();
+        // Gérer la suppression
+        li.querySelector('.delete-btn').addEventListener('click', async () => {
+            const { error } = await supabase
+                .from('todos')
+                .delete()
+                .eq('id', id);
+
+            if (!error) {
+                li.remove();
+                toggleEmptyState();
+            } else {
+                console.error('Erreur lors de la suppression :', error);
+            }
         });
 
         taskList.appendChild(li);
-        taskInput.value = '';
         toggleEmptyState();
-        saveTaskToLocalStorage();
-    }
+    };
+
+    // AJOUTER UNE NOUVELLE TÂCHE
+    const addTask = async (text) => {
+        const taskText = text || taskInput.value.trim();
+        if(!taskText) {
+            return;
+        }
+
+        // Insérer dans Supabase et récupérer la tâche créée (avec son ID)
+        const { data, error } = await supabase
+            .from('todos')
+            .insert([{ task: taskText, completed: false }])
+            .select();
+
+        if (error) {
+            console.error('Erreur lors de l\'ajout :', error);
+            return;
+        }
+
+        if (data && data.length > 0) {
+            const newTask = data[0];
+            createTaskElement(newTask.id, newTask.task, newTask.completed);
+        }
+
+        taskInput.value = '';
+    };
 
     addTaskBtn.addEventListener('click', (e) => {
         e.preventDefault();
         addTask();
     });
+
     taskInput.addEventListener('keypress', (e) => {
         if(e.key === 'Enter'){
             e.preventDefault();
@@ -92,6 +153,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    loadTasksFromLocalStorage();
-
+    // Charger les tâches au démarrage
+    loadTasksFromSupabase();
 });
