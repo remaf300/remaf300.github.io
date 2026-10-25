@@ -5,6 +5,9 @@ const SUPABASE_URL = 'https://tzgpkqothjjqmyfykysp.supabase.co/rest/v1/'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Z3BrcW90aGpqcW15ZnlreXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NjY2NjksImV4cCI6MjEwODQ0MjY2OX0.iFlzCYX2pZYbDN3380qFZaFlaY4jLf6sQwx5xQMONk0'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
+console.log("URL:", SUPABASE_URL);
+console.log("KEY:", SUPABASE_ANON_KEY);
+
 document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('task-input');
     const addTaskBtn = document.getElementById('add-task-btn');
