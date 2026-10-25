@@ -169,43 +169,41 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const swapItems = async (fromIndex, toIndex) => {
         // récupérer l'item du fromIndex
-        const { itemOne, loadItemOneError } = await supabase
+        const { data: items, loadItemsError } = await supabase
                 .from('todos')
-                .select('*')
-                .eq('id', fromIndex);
+                .select(`task, completed`)
+                .or(`id.eq.${fromIndex},id.eq.${toIndex}`);
 
-        if (loadItemOneError) {
+        if (loadItemsError) {
             console.error('Erreur lors du chargement :', error);
             return;
         }
 
-        // récupérer l'item du toIndex
-        const { itemTwo, loadItemTwoError } = await supabase
-                .from('todos')
-                .select('*')
-                .eq('id', toIndex);
+        console.log(items);
+        
+        const firstItemText = items[0].task;
+        const firstItemChecked = items[0].completed;
 
-        if (loadItemTwoError) {
-            console.error('Erreur lors du chargement :', error);
-            return;
-        }
-
-        console.log(itemOne, itemTwo);
-    
         // swap le texte et le completed des tasks (aussi dans la bdd)
-        const { updateItemOneError } = await supabase
+        const { updateFirstItemError } = await supabase
                     .from('todos')
-                    .update({task: itemTwo.text}, { completed: itemTwo.isChecked })
+                    .update({task: items[1].task}, { completed: items[1].completed })
                     .eq('id', fromIndex);
 
-        if (updateItemOneError) console.error('Erreur lors de la mise à jour :', error);
+        if (updateFirstItemError) console.error('Erreur lors de la mise à jour :', error);
 
-        const { updateItemTwoError } = await supabase
+        const { updateSecondItemError } = await supabase
                     .from('todos')
-                    .update({task: itemOne.text}, { completed: itemOne.isChecked })
+                    .update({task: firstItemText}, { completed: firstItemChecked })
                     .eq('id', toIndex);
 
-        if (updateItemTwoError) console.error('Erreur lors de la mise à jour :', error);
+        if (updateSecondItemError) console.error('Erreur lors de la mise à jour :', error);
+
+        taskList[fromIndex].text = items[1].task;
+        taskList[fromIndex].isChecked = items[1].completed;
+
+        taskList[toIndex].text = firstItemText;
+        taskList[toIndex].isChecked = firstItemChecked;
     }
 
     // Charger les tâches au démarrage
