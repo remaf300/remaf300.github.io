@@ -5,8 +5,8 @@ const SUPABASE_URL = 'https://tzgpkqothjjqmyfykysp.supabase.co/'
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR6Z3BrcW90aGpqcW15ZnlreXNwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTI4NjY2NjksImV4cCI6MjEwODQ0MjY2OX0.iFlzCYX2pZYbDN3380qFZaFlaY4jLf6sQwx5xQMONk0'
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
 
-console.log("URL:", SUPABASE_URL);
-console.log("KEY:", SUPABASE_ANON_KEY);
+let dragStartIndex;
+let dragEndIndex;
 
 document.addEventListener('DOMContentLoaded', () => {
     const taskInput = document.getElementById('task-input');
@@ -43,6 +43,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const createTaskElement = (id, text, completed = false) => {
         const li = document.createElement('li');
         li.dataset.id = id; // Stocke l'ID unique de la base de données
+        li.draggable = true;
         li.innerHTML = `
         <input type="checkbox" class="checkbox" ${completed ? 'checked' : ''} />
         <span>${text}</span>
@@ -114,6 +115,16 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
+        li.addEventListener('dragstart', dragStart);
+        li.addEventListener('dragover', dragOver);
+        li.addEventListener('drop', dragDrop);
+        li.addEventListener('drop', () => {
+            swapItems(dragStartIndex, dragEndIndex);
+        });
+
+        li.addEventListener('dragenter', dragEnter);
+        li.addEventListener('dragleave', dragLeave);
+
         taskList.appendChild(li);
         toggleEmptyState();
     };
@@ -156,6 +167,81 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const swapItems = async (fromIndex, toIndex) => {
+        // récupérer l'item du fromIndex
+        const { itemOne, loadItemOneError } = await supabase
+                .from('todos')
+                .select('*')
+                .eq('id', fromIndex);
+
+        if (loadItemOneError) {
+            console.error('Erreur lors du chargement :', error);
+            return;
+        }
+
+        // récupérer l'item du toIndex
+        const { itemTwo, loadItemTwoError } = await supabase
+                .from('todos')
+                .select('*')
+                .eq('id', toIndex);
+
+        if (loadItemTwoError) {
+            console.error('Erreur lors du chargement :', error);
+            return;
+        }
+
+        console.log(itemOne, itemTwo);
+    
+        // swap le texte et le completed des tasks (aussi dans la bdd)
+        const { updateItemOneError } = await supabase
+                    .from('todos')
+                    .update({task: itemTwo.text}, { completed: itemTwo.isChecked })
+                    .eq('id', fromIndex);
+
+        if (updateItemOneError) console.error('Erreur lors de la mise à jour :', error);
+
+        const { updateItemTwoError } = await supabase
+                    .from('todos')
+                    .update({task: itemOne.text}, { completed: itemOne.isChecked })
+                    .eq('id', toIndex);
+
+        if (updateItemTwoError) console.error('Erreur lors de la mise à jour :', error);
+    }
+
     // Charger les tâches au démarrage
     loadTasksFromSupabase();
 });
+
+function dragStart()
+{
+    //console.log('Event: ', 'dragstart');
+    dragStartIndex = +this.closest('li').getAttribute('data-id');
+    console.log(dragStartIndex);
+}
+
+function dragOver(e)
+{
+    //console.log('Event: ', 'over');
+    e.preventDefault();
+    this.classList.add('over');
+}
+
+function dragDrop()
+{
+    //console.log('Event: ', 'drop');
+    dragEndIndex = +this.getAttribute('data-id');
+    console.log(dragEndIndex);
+
+    this.classList.remove('over');
+}
+
+function dragEnter()
+{
+    //console.log('Event: ', 'enter');
+}
+
+function dragLeave()
+{
+    //console.log('Event: ', 'leave');
+    this.classList.remove('over');
+}

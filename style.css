@@ -25,7 +25,7 @@ body {
     padding: 0 20px;
 }
 
-.todo-app {
+.todo-list {
     width: 400px;
     max-width: 400px;
     padding: 2rem;
@@ -112,6 +112,13 @@ body {
     position: relative;
     transition: box-shadow 0.2s ease;
 }
+
+#task-list li.over {
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+    transform: scale(1.01);
+    color: #707070;
+}
+
 
 #task-list li:hover {
     box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
