@@ -167,6 +167,30 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    const updateTaskElement = (id, text, completed = false) => {
+        const listTaskChildren = taskList.querySelectorAll('li');
+        const li = listTaskChildren[id];
+
+        li.innerHTML = `
+        <input type="checkbox" class="checkbox" ${completed ? 'checked' : ''} />
+        <span>${text}</span>
+        <div class="task-buttons">
+            <button class="edit-btn"><i class="fa-solid fa-pen"></i></button>
+            <button class="delete-btn"><i class="fa-solid fa-trash"></i></button>
+        </div>
+        `;
+
+        const checkbox = li.querySelector('.checkbox');
+        const editBtn = li.querySelector('.edit-btn');
+        // Activer/désactiver le editBtn en fonction de completed
+        checkbox.checked = completed;
+        li.classList.toggle('completed', checkbox.checked);
+        editBtn.disabled = completed;
+        editBtn.style.opacity = completed ? '0.5' : '1';
+        editBtn.style.pointerEvents = completed ? 'none' : 'auto'; 
+        
+    }
+
     const swapItems = async (fromIndex, toIndex) => {
         // récupérer l'item du fromIndex
         const { data: items, loadItemsError } = await supabase
@@ -184,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const firstItemText = items[0].task;
         const firstItemChecked = items[0].completed;
 
-        // swap le texte et le completed des tasks (aussi dans la bdd)
+        // swap le texte et le completed des tasks dans la bdd
         const { updateFirstItemError } = await supabase
                     .from('todos')
                     .update({task: items[1].task}, { completed: items[1].completed })
@@ -199,11 +223,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
         if (updateSecondItemError) console.error('Erreur lors de la mise à jour :', error);
 
-        taskList[fromIndex].text = items[1].task;
-        taskList[fromIndex].isChecked = items[1].completed;
-
-        taskList[toIndex].text = firstItemText;
-        taskList[toIndex].isChecked = firstItemChecked;
+        // Modifier les tâches graphiquement
+        updateTaskElement(fromIndex - 1, items[1].task, items[1].completed);
+        updateTaskElement(toIndex - 1, firstItemText, firstItemChecked);
     }
 
     // Charger les tâches au démarrage
