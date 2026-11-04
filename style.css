@@ -25,7 +25,48 @@ body {
     padding: 0 20px;
 }
 
-.todo-list {
+.profile {
+    width: 400px;
+    max-width: 400px;
+    padding: 2rem;
+    display: flex;
+    align-items: left;
+    justify-content: center;
+    flex-direction: column;
+    gap: 30px;
+    color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+    border: 3px solid rgba(98, 98, 98, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.infos {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+    padding: 0 20px;
+}
+
+.current-activity {
+    width: 400px;
+    max-width: 400px;
+    padding: 2rem;
+    display: flex;
+    align-items: left;
+    justify-content: center;
+    flex-direction: column;
+    gap: 30px;
+    color: #fff;
+    border-radius: 20px;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+    border: 3px solid rgba(98, 98, 98, 0.18);
+    backdrop-filter: blur(10px);
+}
+
+.main-project {
     width: 400px;
     max-width: 400px;
     padding: 2rem;
