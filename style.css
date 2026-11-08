@@ -100,6 +100,7 @@ body {
     font-size: 17px;
     position: relative;
     margin-top: 30px;
+    margin-bottom: 30px;
 }
 
 .about-bio {
@@ -176,17 +177,15 @@ a:active {
     align-self: center;
     justify-content: top;
     flex-direction: column;
-    gap: 10px;
     color: #fff;
     border-radius: 10px;
     box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
     border: 1.5px solid rgba(155, 179, 158, 0.242);
-    background-color: rgba(0, 0, 0, 0.3);
-    padding: 20px 20px;
+    background-color: rgba(0, 0, 0, 0.1);
     font-size: 17px;
     position: relative;
+    margin-top: 15px;
     margin-bottom: 30px;
-    margin-top: 30px;
 }
 
 #infos-container projects-li {
@@ -197,7 +196,12 @@ a:active {
     align-self: top;
     justify-content: top;
     flex-direction: column;
-    padding: 0px 20px;
+    color: #fff;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.5);
+    border: 1.5px solid rgba(155, 179, 158, 0.242);
+    background-color: rgba(0, 0, 0, 0.3);
+    border-radius: 10px;
+    padding: 20px 20px;
 }
 
 #project-elements {
